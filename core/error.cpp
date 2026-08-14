@@ -69,7 +69,6 @@ namespace encorder {
 					"`{}.struct_size` is `{}`, expected `{}`",
 					name,
 					header->struct_size,
-					sizeof(enc_struct_header),
 					expected);
 		}
 

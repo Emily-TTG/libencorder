@@ -19,7 +19,7 @@ static bool enc_test_log_result(const char* context, const enum enc_result resul
 			stderr,
 			"%s:%s%s (%s)\n",
 			context,
-			error_context || error_context[0] ? " " : "",
+			error_context && error_context[0] ? " " : "",
 			error_context ? error_context : "",
 			enc_result_name(result)) < 0) perror("fprintf");
 

@@ -7,7 +7,7 @@ namespace encorder {
 	enc_result set_error_result(const result<value>& source) {
 		if(source) return ENC_RESULT_SUCCESS;
 
-		return error_result(source.error());
+		return set_error_result(source.error());
 	}
 
 #define ENC_READ_STRUCT(type, source, version) (read_struct<type>(source, version, #type))

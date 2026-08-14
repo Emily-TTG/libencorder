@@ -50,7 +50,7 @@ namespace encorder {
 	}
 
 	ENC_API enc_chroma enc_format_chroma(const enc_format format) {
-		return lookup<&format_info::chroma>(format, ENC_CHROMA_MONOCHROME);
+		return lookup<&format_info::chroma>(format, ENC_CHROMA_NONE);
 	}
 
 	ENC_API uint32_t enc_format_bit_depth(const enc_format format) {

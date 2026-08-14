@@ -1,7 +1,7 @@
 #include <encorder/core/instance.hpp>
 
 namespace encorder {
-	extern "C" void enc_config_new(enc_config* const config, const enc_codec codec) {
+	ENC_API void enc_config_new(enc_config* const config, const enc_codec codec) {
 		if(!config) return;
 
 		*config = enc_config{};
@@ -49,7 +49,7 @@ namespace encorder {
 		}
 	}
 
-	extern "C" enc_result enc_device_query_capabilities(
+	ENC_API enc_result enc_device_query_capabilities(
 			// ReSharper disable once CppParameterMayBeConstPtrOrRef
 			enc_device* const device,
 			const enc_backend backend,
@@ -68,7 +68,7 @@ namespace encorder {
 						enc_codec_name(codec))));
 	}
 
-	extern "C" enc_result enc_device_query_concurrency(
+	ENC_API enc_result enc_device_query_concurrency(
 			// ReSharper disable once CppParameterMayBeConstPtrOrRef
 			enc_device* const device,
 			const enc_codec,

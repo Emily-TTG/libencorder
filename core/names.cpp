@@ -80,29 +80,29 @@ namespace encorder {
 #define ENC_ENUM_DESCRIPTION(type, ...) enum_description<type, #type>(__VA_ARGS__)
 	}
 
-	extern "C" std::uint32_t enc_version(void) {
+	ENC_API std::uint32_t enc_version(void) {
 		return ENC_VERSION;
 	}
 
-	extern "C" const char* enc_result_name(const enc_result value) {
+	ENC_API const char* enc_result_name(const enc_result value) {
 		return ENC_ENUM_DESCRIPTION(enc_result, value, "unrecognised result");
 	}
 
-	extern "C" const char* enc_last_error_context(void) {
+	ENC_API const char* enc_last_error_context(void) {
 		const auto detail = last_context();
 
 		return detail.empty() ? "" : detail.data();
 	}
 
-	extern "C" const char* enc_backend_name(const enc_backend value) {
+	ENC_API const char* enc_backend_name(const enc_backend value) {
 		return ENC_ENUM_DESCRIPTION(enc_backend, value, "unrecognised backend");
 	}
 
-	extern "C" const char* enc_codec_name(const enc_codec value) {
+	ENC_API const char* enc_codec_name(const enc_codec value) {
 		return ENC_ENUM_DESCRIPTION(enc_codec, value, "unrecognised codec");
 	}
 
-	extern "C" bool enc_codec_has_keyframes(const enc_codec value) {
+	ENC_API bool enc_codec_has_keyframes(const enc_codec value) {
 		return !(value == ENC_CODEC_PRORES || value == ENC_CODEC_MJPEG);
 	}
 }

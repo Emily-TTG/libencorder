@@ -31,7 +31,7 @@ namespace encorder::vulkan {
 
 	class driver final : public encorder::driver {
 	private:
-		const logger& logger;
+		const logger& log;
 
 		shared_library library;
 		VolkInstanceTable functions;
@@ -42,7 +42,7 @@ namespace encorder::vulkan {
 		std::vector<enc_device_info> device_infos;
 
 	public:
-		explicit driver(const class logger&) noexcept;
+		explicit driver(const logger&) noexcept;
 		~driver() override;
 
 		[[nodiscard]]

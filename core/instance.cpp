@@ -75,7 +75,7 @@ namespace encorder {
 		}
 	}
 
-	extern "C" void enc_instance_info_new(enc_instance_info* const info) {
+	ENC_API void enc_instance_info_new(enc_instance_info* const info) {
 		if(!info) return;
 
 		*info = enc_instance_info{};
@@ -86,7 +86,7 @@ namespace encorder {
 		info->log_level = ENC_LOG_OFF;
 	}
 
-	extern "C" enc_result enc_instance_new(const enc_instance_info* const info, enc_instance** const out) {
+	ENC_API enc_result enc_instance_new(const enc_instance_info* const info, enc_instance** const out) {
 		using namespace encorder;
 
 		if(!out) return set_error_result(ENC_RESULT_ERROR_INVALID_ARGUMENT);
@@ -105,15 +105,15 @@ namespace encorder {
 	}
 
 	// ReSharper disable once CppParameterMayBeConstPtrOrRef
-	extern "C" void enc_instance_delete(enc_instance* const instance) {
+	ENC_API void enc_instance_delete(enc_instance* const instance) {
 		delete instance;
 	}
 
-	extern "C" enc_backend enc_instance_backends(const enc_instance* const instance) {
+	ENC_API enc_backend enc_instance_backends(const enc_instance* const instance) {
 		return instance ? instance->available_backends : ENC_BACKEND_NONE;
 	}
 
-	extern "C" enc_result enc_enumerate_devices(
+	ENC_API enc_result enc_enumerate_devices(
 			// ReSharper disable once CppParameterMayBeConstPtrOrRef
 			enc_instance* const instance,
 			uint32_t* const count,
@@ -144,7 +144,7 @@ namespace encorder {
 		return set_error_result(writable < available ? ENC_RESULT_INCOMPLETE : ENC_RESULT_SUCCESS);
 	}
 
-	extern "C" enc_result enc_device_new(
+	ENC_API enc_result enc_device_new(
 			enc_instance* const instance,
 			const uint32_t index,
 			enc_device** const out) {
@@ -183,11 +183,11 @@ namespace encorder {
 	}
 
 	// ReSharper disable once CppParameterMayBeConstPtrOrRef
-	extern "C" void enc_device_delete(enc_device* const device) {
+	ENC_API void enc_device_delete(enc_device* const device) {
 		delete device;
 	}
 
-	extern "C" enc_result enc_device_get_info(
+	ENC_API enc_result enc_device_get_info(
 			const enc_device* const device,
 			enc_device_info* const out) {
 

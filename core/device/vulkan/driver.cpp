@@ -54,8 +54,8 @@ namespace encorder::vulkan {
 		std::mutex volk_mutex;
 	}
 
-	driver::driver(const class logger& logger) noexcept :
-			logger(logger),
+	driver::driver(const logger& log) noexcept :
+			log(log),
 			functions{},
 			instance(VK_NULL_HANDLE) {}
 
@@ -186,7 +186,7 @@ namespace encorder::vulkan {
 		for(const auto handle : handles) {
 			auto inspected = inspect(handle);
 
-			logger.log(
+			log.log(
 					ENC_LOG_DEBUG,
 					"vulkan: device `{}`; encode codecs `{}`; encode family `{}`",
 					inspected.info.name,
@@ -338,8 +338,8 @@ namespace encorder::vulkan {
 				"vulkan device creation not implemented yet");
 	}
 
-	result<std::unique_ptr<encorder::driver>> make_driver(const logger& logger) {
-		auto created = std::make_unique<driver>(logger);
+	result<std::unique_ptr<encorder::driver>> make_driver(const logger& log) {
+		auto created = std::make_unique<driver>(log);
 
 		if(const auto ready = created->initialise(); !ready) {
 			return std::unexpected(ready.error());

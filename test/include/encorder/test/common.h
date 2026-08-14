@@ -13,14 +13,13 @@ extern "C" {
 #define ENC_TEST_FATAL(...) do { if(enc_test_log_result(#__VA_ARGS__, __VA_ARGS__)) exit(EXIT_FAILURE); } while(0)
 
 static bool enc_test_log_result(const char* context, const enum enc_result result) {
-	// ReSharper disable once CppTooWideScopeInitStatement
 	const char* error_context = enc_last_error_context();
 
 	if(fprintf(
 			stderr,
 			"%s:%s%s (%s)\n",
 			context,
-			error_context ? " " : "",
+			error_context || error_context[0] ? " " : "",
 			error_context ? error_context : "",
 			enc_result_name(result)) < 0) perror("fprintf");
 

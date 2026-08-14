@@ -45,23 +45,23 @@ namespace encorder {
 		}
 	}
 
-	extern "C" const char* enc_format_name(const enc_format format) {
+	ENC_API const char* enc_format_name(const enc_format format) {
 		return lookup<&format_info::name>(format, "undefined");
 	}
 
-	extern "C" enc_chroma enc_format_chroma(const enc_format format) {
+	ENC_API enc_chroma enc_format_chroma(const enc_format format) {
 		return lookup<&format_info::chroma>(format, ENC_CHROMA_MONOCHROME);
 	}
 
-	extern "C" uint32_t enc_format_bit_depth(const enc_format format) {
+	ENC_API uint32_t enc_format_bit_depth(const enc_format format) {
 		return lookup<&format_info::bit_depth>(format, 0);
 	}
 
-	extern "C" uint32_t enc_format_plane_count(const enc_format format) {
+	ENC_API uint32_t enc_format_plane_count(const enc_format format) {
 		return lookup<&format_info::plane_count>(format, 0);
 	}
 
-	extern "C" bool enc_format_is_rgb(const enc_format format) {
+	ENC_API bool enc_format_is_rgb(const enc_format format) {
 		return lookup<&format_info::rgb>(format, false);
 	}
 }

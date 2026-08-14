@@ -1,0 +1,4 @@
+---
+Checks: >
+  -modernize-avoid-bind
+  -misc-misplaced-const

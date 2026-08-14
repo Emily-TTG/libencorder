@@ -1,0 +1,17 @@
+[submodule "cmake"]
+	path = cmake
+	url = https://github.com/Emily-TTG/CMakeHelpers
+    ignore = dirty
+    shallow = true
+
+[submodule "core/device/vulkan/vendor/vulkan-headers"]
+	path = core/device/vulkan/vendor/vulkan-headers
+	url = https://github.com/KhronosGroup/Vulkan-Headers
+    ignore = dirty
+    shallow = true
+[submodule "core/vendor/magic_enum"]
+	path = core/vendor/magic_enum
+	url = https://github.com/Neargye/magic_enum
+[submodule "core/device/vulkan/vendor/volk"]
+	path = core/device/vulkan/vendor/volk
+	url = https://github.com/zeux/volk

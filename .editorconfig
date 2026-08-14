@@ -1,0 +1,19 @@
+root = true
+
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+[*.{c,h,cpp,hpp,inl,in}]
+indent_style = tab
+indent_size = 4
+resharper_cpp_redundant_access_specifier_highlighting = none
+
+[*.{cmake,txt}]
+indent_style = tab
+indent_size = 4
+
+[*.md]
+indent_style = tab
+max_line_length = 80

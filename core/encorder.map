@@ -1,0 +1,6 @@
+ENCORDER_0 {
+	global:
+		enc_*;
+	local:
+		*;
+};

@@ -1,0 +1,15 @@
+#include <encorder/core/instance.hpp>
+
+@ENCORDER_DRIVER_INCLUDES@
+
+namespace encorder {
+	namespace {
+		constexpr std::array registrations{
+@ENCORDER_DRIVER_REGISTRATIONS@
+		};
+	}
+
+	std::span<const driver_registration> registered_drivers() noexcept {
+		return std::span(registrations);
+	}
+}

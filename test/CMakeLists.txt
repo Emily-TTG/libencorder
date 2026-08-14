@@ -9,9 +9,9 @@ function(encorder_test TEST_NAME LANGUAGE)
 	set(_NAME "encorder-test-${TEST_NAME}")
 	add_executable(${_NAME})
 
-	if(NAME STREQUAL "c")
+	if(LANGUAGE STREQUAL "c")
 		target_compile_features(${_NAME} PRIVATE c_std_99)
-	elseif(NAME STREQUAL "cpp")
+	elseif(LANGUAGE STREQUAL "cpp")
 		target_compile_features(${_NAME} PRIVATE cxx_std_23)
 	endif()
 

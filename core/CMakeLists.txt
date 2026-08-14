@@ -20,8 +20,8 @@ if(ENCORDER_BACKEND_VULKAN)
 endif()
 
 if(ENCORDER_BACKEND_VIDEOTOOLKIT)
-	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/device/vulkan)
-	target_link_libraries(encorder PRIVATE encorder-backend-vulkan)
+	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/device/videotoolkit)
+	target_link_libraries(encorder PRIVATE encorder-backend-videotoolkit)
 endif()
 
 if(NOT ENCORDER_DRIVER_REGISTRATIONS)
@@ -82,7 +82,6 @@ endif()
 target_precompile_headers(encorder PRIVATE ${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/pch.hpp)
 
 target_include_directories(encorder PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
-target_include_directories(encorder PRIVATE ${ENCORDER_DEVICE}/include)
 
 target_sources(
 		encorder PUBLIC

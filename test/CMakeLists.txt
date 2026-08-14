@@ -16,7 +16,7 @@ function(encorder_test TEST_NAME LANGUAGE)
 	endif()
 
 	encorder_default_options(${_NAME})
-	set_target_properties(${TARGET} PROPERTIES FOLDER encorder/test)
+	set_target_properties(${_NAME} PROPERTIES FOLDER encorder/test)
 
 	target_link_libraries(${_NAME} PRIVATE encorder-test-common)
 

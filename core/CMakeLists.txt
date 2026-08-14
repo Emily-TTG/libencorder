@@ -36,7 +36,7 @@ target_link_libraries(encorder PRIVATE magic_enum::magic_enum)
 
 target_compile_features(encorder PUBLIC cxx_std_23)
 encorder_default_options(encorder)
-set_target_properties(${TARGET} PROPERTIES FOLDER encorder)
+set_target_properties(encorder PROPERTIES FOLDER encorder)
 
 set_target_properties(
 		encorder PROPERTIES

@@ -7,7 +7,7 @@ set(ENCORDER_DRIVER_INCLUDES "${ENCORDER_DRIVER_INCLUDES}" PARENT_SCOPE)
 set(ENCORDER_DRIVER_REGISTRATIONS "${ENCORDER_DRIVER_REGISTRATIONS}" PARENT_SCOPE)
 
 add_library(encorder-backend-vulkan INTERFACE)
-set_target_properties(${TARGET} PROPERTIES FOLDER encorder/backend)
+set_target_properties(encorder-backend-vulkan PROPERTIES FOLDER encorder/backend)
 
 target_link_libraries(encorder-backend-vulkan INTERFACE Vulkan::Headers volk::volk)
 

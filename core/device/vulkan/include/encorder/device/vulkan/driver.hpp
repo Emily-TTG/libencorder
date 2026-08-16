@@ -74,6 +74,21 @@ namespace encorder::vulkan {
 		physical_device_info inspect(VkPhysicalDevice) const;
 	};
 
+#define ENC_CHECK_VULKAN(expression, translate) check_vulkan(#expression, expression, translate)
+
+#ifdef __GNUC__
+# define ENC_VULKAN_STRUCT(...) \
+		_Pragma("GCC diagnostic push") \
+		_Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"") \
+		__VA_ARGS__ \
+		_Pragma("GCC diagnostic pop")
+#else
+# define ENC_VULKAN_STRUCT(...) __VA_ARGS__
+#endif
+
+	[[nodiscard]]
+	std::expected<void, error> check_vulkan(std::string_view, VkResult, enc_result);
+
 	[[nodiscard]]
 	result<std::unique_ptr<encorder::driver>> make_driver(const logger&);
 }

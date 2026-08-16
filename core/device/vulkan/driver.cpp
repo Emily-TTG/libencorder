@@ -132,26 +132,25 @@ namespace encorder::vulkan {
 					VK_API_VERSION_MINOR(loader_version));
 		}
 
-		constexpr VkApplicationInfo application{
+		ENC_VULKAN_STRUCT(constexpr VkApplicationInfo application{
 				.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
 				.pApplicationName = "libencorder",
 				.applicationVersion = ENC_VERSION,
 				.pEngineName = "libencorder",
 				.engineVersion = ENC_VERSION,
 				.apiVersion = VK_API_VERSION_1_3
-		};
+		};)
 
-		const VkInstanceCreateInfo create{
+		ENC_VULKAN_STRUCT(const VkInstanceCreateInfo create{
 				.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
 				.pApplicationInfo = &application
-		};
+		};)
 
-		// TODO(Emily): Convert/stringify Vulkan results.
 		if(const auto status = vkCreateInstance(&create, nullptr, &instance); status != VK_SUCCESS) {
 			return unexpect(
 					ENC_RESULT_ERROR_INITIALIZATION_FAILED,
 					"`vkCreateInstance` failed with `{}`",
-					static_cast<std::int32_t>(status));
+					magic_enum::enum_name<VkResult>(status));
 		}
 
 		volkLoadInstanceTable(&functions, instance);
@@ -176,7 +175,12 @@ namespace encorder::vulkan {
 	result<void> driver::enumerate() {
 		std::uint32_t count = 0;
 
-		functions.vkEnumeratePhysicalDevices(instance, &count, nullptr);
+		if(const auto status = ENC_CHECK_VULKAN(
+				functions.vkEnumeratePhysicalDevices(instance, &count, nullptr),
+				ENC_RESULT_ERROR_NO_DEVICE); !status) {
+
+			return std::unexpected(status.error());
+		}
 
 		if(!count) return unexpect(ENC_RESULT_ERROR_NO_DEVICE, "no vulkan physical devices");
 
@@ -216,19 +220,19 @@ namespace encorder::vulkan {
 
 		result.handle = handle;
 
-		VkPhysicalDeviceIDProperties identity{
+		ENC_VULKAN_STRUCT(VkPhysicalDeviceIDProperties identity{
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_ID_PROPERTIES
-		};
+		};)
 
-		VkPhysicalDeviceDriverProperties driver_properties{
+		ENC_VULKAN_STRUCT(VkPhysicalDeviceDriverProperties driver_properties{
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DRIVER_PROPERTIES,
 				.pNext = &identity
-		};
+		};)
 
-		VkPhysicalDeviceProperties2 properties{
+		ENC_VULKAN_STRUCT(VkPhysicalDeviceProperties2 properties{
 				.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_PROPERTIES_2,
 				.pNext = &driver_properties
-		};
+		};)
 
 		functions.vkGetPhysicalDeviceProperties2(handle, &properties);
 
@@ -273,14 +277,14 @@ namespace encorder::vulkan {
 		std::vector<VkQueueFamilyVideoPropertiesKHR> video_properties(family_count);
 
 		for(std::uint32_t i = 0; i < family_count; ++i) {
-			video_properties[i] = VkQueueFamilyVideoPropertiesKHR{
+			ENC_VULKAN_STRUCT(video_properties[i] = VkQueueFamilyVideoPropertiesKHR{
 					.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_VIDEO_PROPERTIES_KHR
-			};
+			};)
 
-			family_properties[i] = VkQueueFamilyProperties2{
+			ENC_VULKAN_STRUCT(family_properties[i] = VkQueueFamilyProperties2{
 					.sType = VK_STRUCTURE_TYPE_QUEUE_FAMILY_PROPERTIES_2,
 					.pNext = video_queue ? &video_properties[i] : nullptr
-			};
+			};)
 		}
 
 		functions.vkGetPhysicalDeviceQueueFamilyProperties2(
@@ -336,6 +340,20 @@ namespace encorder::vulkan {
 		return unexpect(
 				ENC_RESULT_ERROR_UNSUPPORTED,
 				"vulkan device creation not implemented yet");
+	}
+
+	std::expected<void, error> check_vulkan(
+			const std::string_view context,
+			const VkResult vulkan_result,
+			const enc_result result) {
+
+		if(vulkan_result == VK_SUCCESS) return {};
+
+		return unexpect(
+				result,
+				"`{}`: `{}`",
+				context,
+				magic_enum::enum_name<VkResult>(vulkan_result));
 	}
 
 	result<std::unique_ptr<encorder::driver>> make_driver(const logger& log) {

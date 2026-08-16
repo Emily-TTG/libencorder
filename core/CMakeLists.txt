@@ -19,9 +19,9 @@ if(ENCORDER_BACKEND_VULKAN)
 	target_link_libraries(encorder PRIVATE encorder-backend-vulkan)
 endif()
 
-if(ENCORDER_BACKEND_VIDEOTOOLKIT)
-	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/device/videotoolkit)
-	target_link_libraries(encorder PRIVATE encorder-backend-videotoolkit)
+if(ENCORDER_BACKEND_VIDEOTOOLBOX)
+	add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/device/videotoolbox)
+	target_link_libraries(encorder PRIVATE encorder-backend-videotoolbox)
 endif()
 
 if(NOT ENCORDER_DRIVER_REGISTRATIONS)

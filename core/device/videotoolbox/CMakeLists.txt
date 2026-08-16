@@ -3,13 +3,14 @@
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/vendor)
 
 string(APPEND ENCORDER_DRIVER_INCLUDES "#include <encorder/device/videotoolbox/driver.hpp>\n")
-string(APPEND ENCORDER_DRIVER_REGISTRATIONS "\t\t\t\tdriver_registration{ .kind = ENC_NATIVE_VIDEOTOOLBOX, .name = \"videotoolbox\", .create = &videotoolbox::make_driver },\n")
+# TODO(Emily): Natives for Metal vs. IOSurface.
+string(APPEND ENCORDER_DRIVER_REGISTRATIONS "\t\t\t\tdriver_registration{ .kind = ENC_NATIVE_METAL, .name = \"videotoolbox\", .create = &videotoolbox::make_driver },\n")
 
 set(ENCORDER_DRIVER_INCLUDES "${ENCORDER_DRIVER_INCLUDES}" PARENT_SCOPE)
 set(ENCORDER_DRIVER_REGISTRATIONS "${ENCORDER_DRIVER_REGISTRATIONS}" PARENT_SCOPE)
 
 add_library(encorder-backend-videotoolbox INTERFACE)
-set_target_properties(${TARGET} PROPERTIES FOLDER encorder/backend)
+set_target_properties(encorder-backend-videotoolbox PROPERTIES FOLDER encorder/backend)
 
 target_link_libraries(encorder-backend-videotoolbox INTERFACE $<LINK_LIBRARY:FRAMEWORK,VideoToolbox>)
 

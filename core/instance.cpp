@@ -44,7 +44,7 @@ namespace encorder {
 
 				instance->logger.log(
 						ENC_LOG_INFO,
-						"{} driver ready, {} device{}",
+						"`{}` driver ready, {} device{}",
 						registration.name,
 						count,
 						count != 1 ? "s" : "");
@@ -74,6 +74,37 @@ namespace encorder {
 			return instance;
 		}
 	}
+
+}
+
+encorder::result<encorder::device*> enc_instance::query_device(const std::uint32_t index) {
+	using namespace encorder;
+
+	if(index >= device_slots.size()) {
+		return unexpect(
+				ENC_RESULT_ERROR_NO_DEVICE,
+				"device index {} out of range, {} available",
+				index,
+				device_slots.size());
+	}
+
+	const std::scoped_lock guard(query_mutex);
+
+	query_devices.resize(device_slots.size());
+
+	if(const auto& cached = query_devices[index]) return cached.get();
+
+	const auto& [ owner, local ] = device_slots[index];
+
+	auto opened = drivers[owner]->open(local);
+	if(!opened) return std::unexpected(opened.error());
+
+	query_devices[index] = std::move(*opened);
+
+	return query_devices[index].get();
+}
+
+namespace encorder {
 
 	ENC_API void enc_instance_info_new(enc_instance_info* const info) {
 		if(!info) return;
@@ -142,44 +173,6 @@ namespace encorder {
 		*count = writable;
 
 		return set_error_result(writable < available ? ENC_RESULT_INCOMPLETE : ENC_RESULT_SUCCESS);
-	}
-
-	ENC_API enc_result enc_device_new(
-			enc_instance* const instance,
-			const uint32_t index,
-			enc_device** const out) {
-
-		using namespace encorder;
-
-		if(!instance || !out) return set_error_result(ENC_RESULT_ERROR_INVALID_ARGUMENT);
-
-		*out = nullptr;
-
-		if(index >= instance->device_slots.size()) {
-			return set_error_result(error(
-					ENC_RESULT_ERROR_NO_DEVICE,
-					std::format(
-							"device index {} out of range, {} available",
-							index,
-							instance->device_slots.size())));
-		}
-
-		const auto& [ owner, local ] = instance->device_slots[index];
-
-		auto opened = instance->drivers[owner]->open(local);
-		if(!opened) return set_error_result(opened.error());
-
-		auto device = std::make_unique<enc_device>(enc_device{
-				.owner = instance,
-				.implementation = std::move(*opened)
-		});
-
-		device->owner = instance;
-		device->implementation = std::move(*opened);
-
-		*out = device.release();
-
-		return set_error_result(ENC_RESULT_SUCCESS);
 	}
 
 	// ReSharper disable once CppParameterMayBeConstPtrOrRef

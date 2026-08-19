@@ -12,6 +12,3 @@
 [submodule "core/vendor/magic_enum"]
 	path = core/vendor/magic_enum
 	url = https://github.com/Neargye/magic_enum
-[submodule "core/device/vulkan/vendor/volk"]
-	path = core/device/vulkan/vendor/volk
-	url = https://github.com/zeux/volk

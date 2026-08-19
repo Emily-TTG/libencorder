@@ -8,6 +8,8 @@ int main(void) {
 	struct enc_instance* instance = 0;
 	struct enc_device_info devices[4];
 	uint32_t count = sizeof(devices) / sizeof(devices[0]);
+	uint32_t index;
+	enum enc_format preferred = ENC_FORMAT_UNDEFINED;
 
 	enc_instance_info_new(&info);
 	enc_config_new(&config, ENC_CODEC_H264);
@@ -27,9 +29,30 @@ int main(void) {
 	config.rate.parameters.codec_tier.tier = 0;
 
 	config.gop.keyframe_interval = ENC_KEYFRAME_LEADING_ONLY;
+	config.conversion = ENC_CONVERSION_ALLOW;
+	config.conversion = ENC_CONVERSION_FORBID;
 
 	ENC_TEST_FATAL(enc_instance_new(&info, &instance));
 	ENC_TEST_FATAL(enc_enumerate_devices(instance, &count, devices));
+
+	for(index = 0; index < count; ++index) {
+		struct enc_capabilities capabilities;
+		struct enc_concurrency_capabilities concurrency;
+		enum enc_surface_tier tier = ENC_SURFACE_TIER_NONE;
+
+		if(!ENC_TEST_RESULT(enc_instance_query_capabilities(
+				instance, index, ENC_BACKEND_NONE, ENC_CODEC_H264, &capabilities))) {
+
+			preferred = capabilities.preferred_input_format;
+
+			ENC_TEST_RESULT(enc_instance_query_format(
+					instance, index, ENC_BACKEND_NONE, ENC_CODEC_H264, preferred, &tier));
+		}
+
+		ENC_TEST_RESULT(enc_instance_query_concurrency(
+				instance, index, ENC_CODEC_H264, &concurrency));
+	}
+
 	enc_instance_delete(instance);
 
 	return 0;

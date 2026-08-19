@@ -26,6 +26,18 @@ namespace encorder {
 
 		[[nodiscard]]
 		virtual enc_backend backends() const noexcept = 0;
+
+		[[nodiscard]]
+		virtual result<enc_capabilities> query_capabilities(enc_backend, enc_codec) = 0;
+
+		[[nodiscard]]
+		virtual result<enc_concurrency_capabilities> query_concurrency(enc_codec) = 0;
+
+		[[nodiscard]]
+		virtual result<enc_surface_tier> query_format(enc_backend, enc_codec, enc_format) = 0;
+
+		[[nodiscard]]
+		virtual bool encode_capable() const noexcept = 0;
 	};
 
 	class driver {
@@ -53,5 +65,9 @@ namespace encorder {
 
 		[[nodiscard]]
 		virtual result<std::unique_ptr<device>> open(std::uint32_t) = 0;
+
+		// Adopt a device the host renderer owns via. this native's interop struct.
+		[[nodiscard]]
+		virtual result<std::unique_ptr<device>> adopt(const void*);
 	};
 }

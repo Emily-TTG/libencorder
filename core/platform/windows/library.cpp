@@ -1,7 +1,17 @@
 #include <encorder/core/library.hpp>
 #include <encorder/core/error.inl>
 
-#include <dlfcn.h>
+#ifndef WIN32_LEAN_AND_MEAN
+# define WIN32_LEAN_AND_MEAN
+#endif
+
+#ifndef NOMINMAX
+# define NOMINMAX
+#endif
+
+#include <windows.h>
+
+#include <system_error>
 
 namespace encorder {
 	shared_library::shared_library() noexcept :
@@ -36,18 +46,18 @@ namespace encorder {
 		}
 
 		for(const auto* const candidate : candidates) {
-			/* Clear any stale error. */
-			dlerror();
-
-			handle = dlopen(candidate, RTLD_LAZY | RTLD_LOCAL);
+			handle = LoadLibraryA(candidate);
 
 			if(handle) return {};
 
+			const auto reason = static_cast<int>(GetLastError());
+
 			if(!failures.empty()) failures += "; ";
 
-			const auto* const reason = dlerror();
-
-			failures += std::format("`{}`: {}", candidate, reason ? reason : "unknown error");
+			failures += std::format(
+					"`{}`: {}",
+					candidate,
+					std::system_category().message(reason));
 		}
 
 		return unexpect(ENC_RESULT_ERROR_INITIALIZATION_FAILED, "{}", failures);
@@ -56,7 +66,7 @@ namespace encorder {
 	void shared_library::close() noexcept {
 		if(!handle) return;
 
-		dlclose(handle);
+		FreeLibrary(static_cast<HMODULE>(handle));
 
 		handle = nullptr;
 	}
@@ -66,6 +76,9 @@ namespace encorder {
 	}
 
 	void* shared_library::symbol(const char* const name) const noexcept {
-		return handle ? dlsym(handle, name) : nullptr;
+		if(!handle) return nullptr;
+
+		return reinterpret_cast<void*>(
+				GetProcAddress(static_cast<HMODULE>(handle), name));
 	}
 }

@@ -405,6 +405,16 @@ enum ENC_ENUM_CLOSED enc_overflow_policy {
 	ENC_OVERFLOW_ANY = 2
 };
 
+/*
+ * A conversion pass costs bandwidth and a compute dispatch every frame. The
+ * caller can usually avoid it by rendering into `preferred_input_format`, so
+ * refusing is the default.
+ */
+enum ENC_ENUM_CLOSED enc_conversion_policy {
+	ENC_CONVERSION_FORBID = 0,
+	ENC_CONVERSION_ALLOW = 1
+};
+
 ENC_ENUM_CLOSED_FLAG(enc_surface_tier, {
 	ENC_SURFACE_TIER_NONE = 0,
 	ENC_SURFACE_TIER_FUSED = 1,
@@ -514,6 +524,13 @@ struct enc_capabilities {
 
 	uint32_t input_format_count;
 	enum enc_format input_formats[16];
+
+	/*
+	 * The input format the encoder consumes with no conversion and no copy.
+	 * Render into this and `enc_instance_query_format` reports
+	 * `ENC_SURFACE_TIER_FUSED`. `ENC_FORMAT_UNDEFINED` if none is preferable.
+	 */
+	enum enc_format preferred_input_format;
 };
 
 enum ENC_ENUM_CLOSED enc_session_limit_source {
@@ -559,6 +576,12 @@ struct enc_config {
 
 	/* ENC_BACKEND_NONE selects automatically. */
 	enum enc_backend preferred_backend;
+
+	/*
+	 * Whether the encoder may insert a conversion pass when `input_format` is
+	 * not one the encoder consumes directly. See `enc_instance_query_format`.
+	 */
+	enum enc_conversion_policy conversion;
 
 	uint32_t async_depth;
 };
@@ -609,8 +632,22 @@ ENC_API enum enc_backend enc_instance_backends(const struct enc_instance*);
  * Returns `ENC_INCOMPLETE` when the supplied array was too small.
  */
 ENC_API enum enc_result enc_enumerate_devices(struct enc_instance*, uint32_t*, struct enc_device_info*);
-ENC_API enum enc_result enc_device_new(struct enc_instance*, uint32_t, struct enc_device**);
+
+ENC_API enum enc_result enc_instance_query_capabilities(struct enc_instance*, uint32_t, enum enc_backend, enum enc_codec, struct enc_capabilities*);
+ENC_API enum enc_result enc_instance_query_concurrency(struct enc_instance*, uint32_t, enum enc_codec, struct enc_concurrency_capabilities*);
+
+ENC_API enum enc_result enc_instance_query_format(struct enc_instance*, uint32_t, enum enc_backend, enum enc_codec, enum enc_format, enum enc_surface_tier*);
+
+/*
+ * Adopt a device from the host renderer via. struct matching `enc_native_kind`.
+ * e.g. `enc_vulkan_device_info` from <encorder/encorder_vulkan.h>.
+ */
+ENC_API enum enc_result enc_device_new_from_native(struct enc_instance*, enum enc_native_kind, const void*, struct enc_device**);
+
 ENC_API void enc_device_delete(struct enc_device*);
+
+/* Whether this device can create encoders, or only answer queries. */
+ENC_API bool enc_device_can_encode(const struct enc_device*);
 
 ENC_API enum enc_result enc_device_get_info(const struct enc_device*, struct enc_device_info*);
 ENC_API enum enc_result enc_device_query_capabilities(struct enc_device*, enum enc_backend, enum enc_codec, struct enc_capabilities*);

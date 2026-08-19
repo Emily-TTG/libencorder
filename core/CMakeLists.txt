@@ -85,19 +85,23 @@ target_include_directories(encorder PUBLIC ${CMAKE_CURRENT_LIST_DIR}/include)
 
 target_sources(
 		encorder PUBLIC
-		${CMAKE_CURRENT_LIST_DIR}/include/encorder/encorder.h)
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/encorder.h
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/encorder_vulkan.h)
 
 target_sources(
 		encorder PRIVATE
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/device.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/error.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/error.inl
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/format.hpp
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/format_map.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/instance.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/library.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/library.inl
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/logger.hpp
 		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/logger.inl
-		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/pch.hpp)
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/pch.hpp
+		${CMAKE_CURRENT_LIST_DIR}/include/encorder/core/session.hpp)
 
 target_sources(
 		encorder PRIVATE
@@ -108,6 +112,8 @@ target_sources(
 		${CMAKE_CURRENT_LIST_DIR}/instance.cpp
 		${CMAKE_CURRENT_LIST_DIR}/logger.cpp
 		${CMAKE_CURRENT_LIST_DIR}/names.cpp
+		${CMAKE_CURRENT_LIST_DIR}/native.cpp
+		${CMAKE_CURRENT_LIST_DIR}/session.cpp
 
 		${CMAKE_CURRENT_BINARY_DIR}/registry.cpp
 

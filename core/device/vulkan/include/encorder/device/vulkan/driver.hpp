@@ -2,12 +2,38 @@
 
 #include <encorder/core/library.hpp>
 #include <encorder/core/device.hpp>
+#include <encorder/device/vulkan/common.hpp>
+#include <encorder/device/vulkan/functions.hpp>
 
-#include <volk.h>
 
 namespace encorder::vulkan {
+	struct api_codec {
+		VkVideoCodecOperationFlagBitsKHR flag;
+		enc_codec codec;
+		const char* extension;
+	};
+
+	inline constexpr std::array codec_mappings{
+			api_codec{
+					.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_H264_BIT_KHR,
+					.codec = ENC_CODEC_H264,
+					.extension = VK_KHR_VIDEO_ENCODE_H264_EXTENSION_NAME
+			},
+			api_codec{
+					.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR,
+					.codec = ENC_CODEC_HEVC,
+					.extension = VK_KHR_VIDEO_ENCODE_H265_EXTENSION_NAME
+			},
+			api_codec{
+					.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_AV1_BIT_KHR,
+					.codec = ENC_CODEC_AV1,
+					.extension = VK_KHR_VIDEO_ENCODE_AV1_EXTENSION_NAME
+			}
+	};
+
 	struct queue_family {
 		std::uint32_t index;
+		std::uint32_t queue_count;
 		VkQueueFlags flags;
 		VkVideoCodecOperationFlagsKHR codec_operations;
 	};
@@ -34,7 +60,9 @@ namespace encorder::vulkan {
 		const logger& log;
 
 		shared_library library;
-		VolkInstanceTable functions;
+
+		loader_functions loader;
+		instance_functions functions;
 
 		VkInstance instance;
 
@@ -60,6 +88,9 @@ namespace encorder::vulkan {
 		[[nodiscard]]
 		result<std::unique_ptr<device>> open(std::uint32_t) override;
 
+		[[nodiscard]]
+		result<std::unique_ptr<device>> adopt(const void*) override;
+
 	private:
 		[[nodiscard]]
 		result<void> load_library();
@@ -73,21 +104,6 @@ namespace encorder::vulkan {
 		[[nodiscard]]
 		physical_device_info inspect(VkPhysicalDevice) const;
 	};
-
-#define ENC_CHECK_VULKAN(expression, translate) check_vulkan(#expression, expression, translate)
-
-#ifdef __GNUC__
-# define ENC_VULKAN_STRUCT(...) \
-		_Pragma("GCC diagnostic push") \
-		_Pragma("GCC diagnostic ignored \"-Wmissing-field-initializers\"") \
-		__VA_ARGS__ \
-		_Pragma("GCC diagnostic pop")
-#else
-# define ENC_VULKAN_STRUCT(...) __VA_ARGS__
-#endif
-
-	[[nodiscard]]
-	std::expected<void, error> check_vulkan(std::string_view, VkResult, enc_result);
 
 	[[nodiscard]]
 	result<std::unique_ptr<encorder::driver>> make_driver(const logger&);

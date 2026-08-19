@@ -62,4 +62,7 @@ namespace encorder {
 			const void*,
 			std::uint32_t,
 			std::string_view);
+
+// TODO(Emily): Need to add `[[unlikely]]` to all our error paths.
+#define ENC_NULL_CHECK(expression) if(!(expression)) [[unlikely]] return unexpect(ENC_RESULT_ERROR_INVALID_ARGUMENT, "`" #expression "` is null");
 }

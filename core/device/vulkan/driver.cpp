@@ -1,4 +1,5 @@
 #include <encorder/device/vulkan/driver.hpp>
+#include <encorder/device/vulkan/device.hpp>
 
 #include <encorder/core/error.inl>
 #include <encorder/core/library.inl>
@@ -19,30 +20,6 @@ namespace encorder::vulkan {
 #endif
 		};
 
-		struct api_codec {
-			VkVideoCodecOperationFlagBitsKHR flag;
-			enc_codec codec;
-			const char* extension;
-		};
-
-		constexpr std::array codec_mappings{
-				api_codec{
-						.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_H264_BIT_KHR,
-						.codec = ENC_CODEC_H264,
-						.extension = VK_KHR_VIDEO_ENCODE_H264_EXTENSION_NAME
-				},
-				api_codec{
-						.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_H265_BIT_KHR,
-						.codec = ENC_CODEC_HEVC,
-						.extension = VK_KHR_VIDEO_ENCODE_H265_EXTENSION_NAME
-				},
-				api_codec{
-						.flag = VK_VIDEO_CODEC_OPERATION_ENCODE_AV1_BIT_KHR,
-						.codec = ENC_CODEC_AV1,
-						.extension = VK_KHR_VIDEO_ENCODE_AV1_EXTENSION_NAME
-				}
-		};
-
 		[[nodiscard]]
 		bool has_extension(
 				const std::vector<std::string>& extensions,
@@ -50,12 +27,11 @@ namespace encorder::vulkan {
 
 			return std::ranges::contains(extensions, name);
 		}
-
-		std::mutex volk_mutex;
 	}
 
 	driver::driver(const logger& log) noexcept :
 			log(log),
+			loader{},
 			functions{},
 			instance(VK_NULL_HANDLE) {}
 
@@ -85,10 +61,11 @@ namespace encorder::vulkan {
 	}
 
 	result<void> driver::load_library() {
-		if(!library.open(library_candidates)) {
+		if(const auto opened = library.open(library_candidates); !opened) {
 			return unexpect(
 					ENC_RESULT_ERROR_INITIALIZATION_FAILED,
-					"failed to open vulkan loader");
+					"failed to open vulkan loader: {}",
+					opened.error().get_context());
 		}
 
 		const auto get_symbol = library.lookup<PFN_vkGetInstanceProcAddr>("vkGetInstanceProcAddr");
@@ -99,11 +76,9 @@ namespace encorder::vulkan {
 					"could not find `vkGetInstanceProcAddr`");
 		}
 
-		const std::scoped_lock guard(volk_mutex);
+		loader = load_loader_functions(get_symbol);
 
-		volkInitializeCustom(get_symbol);
-
-		if(!vkCreateInstance) {
+		if(!loader.vkCreateInstance) {
 			return unexpect(
 					ENC_RESULT_ERROR_INITIALIZATION_FAILED,
 					"could not find `vkCreateInstance`");
@@ -113,11 +88,11 @@ namespace encorder::vulkan {
 	}
 
 	result<void> driver::create_instance() {
-		const std::scoped_lock guard(volk_mutex);
-
 		std::uint32_t loader_version = VK_API_VERSION_1_0;
 
-		if(vkEnumerateInstanceVersion) vkEnumerateInstanceVersion(&loader_version);
+		if(loader.vkEnumerateInstanceVersion) {
+			loader.vkEnumerateInstanceVersion(&loader_version);
+		}
 
 		/*
 		 * TODO(Emily): We should be able to proceed with 1.2, but we do need
@@ -146,14 +121,15 @@ namespace encorder::vulkan {
 				.pApplicationInfo = &application
 		};)
 
-		if(const auto status = vkCreateInstance(&create, nullptr, &instance); status != VK_SUCCESS) {
+		if(const auto status = loader.vkCreateInstance(&create, nullptr, &instance);
+				status != VK_SUCCESS) {
 			return unexpect(
 					ENC_RESULT_ERROR_INITIALIZATION_FAILED,
 					"`vkCreateInstance` failed with `{}`",
 					magic_enum::enum_name<VkResult>(status));
 		}
 
-		volkLoadInstanceTable(&functions, instance);
+		functions = load_instance_functions(loader.vkGetInstanceProcAddr, instance);
 
 		const auto complete =
 				functions.vkDestroyInstance
@@ -255,13 +231,48 @@ namespace encorder::vulkan {
 		std::memcpy(result.info.name, device_name.data(), writable);
 		result.info.name[writable] = '\0';
 
-		std::uint32_t extension_count = 0;
-		functions.vkEnumerateDeviceExtensionProperties(handle, nullptr, &extension_count, nullptr);
+		std::vector<VkExtensionProperties> extension_properties;
 
-		std::vector<VkExtensionProperties> extension_properties(extension_count);
-		functions.vkEnumerateDeviceExtensionProperties(handle, nullptr, &extension_count, extension_properties.data());
+		// TODO(Emily): Just kind of pulled this number out of thin air for
+		//              re-querying. Does Khronos not tell us how to retry here?
+		for(std::uint32_t attempt = 0; attempt < 4; ++attempt) {
+			std::uint32_t extension_count = 0;
 
-		result.extensions.reserve(extension_count);
+			auto status = functions.vkEnumerateDeviceExtensionProperties(
+					handle,
+					nullptr,
+					&extension_count,
+					nullptr);
+
+			if(status == VK_SUCCESS && extension_count) {
+				extension_properties.resize(extension_count);
+
+				status = functions.vkEnumerateDeviceExtensionProperties(
+						handle,
+						nullptr,
+						&extension_count,
+						extension_properties.data());
+			}
+
+			if(status == VK_INCOMPLETE) continue;
+
+			if(status != VK_SUCCESS) {
+				log.log(
+						ENC_LOG_WARN,
+						"vulkan: could not enumerate device extensions for `{}`: `{}`",
+						result.info.name,
+						magic_enum::enum_name<VkResult>(status));
+
+				extension_properties.clear();
+			}
+
+			// A driver may report fewer than it sized for.
+			extension_properties.resize(std::min<std::size_t>(extension_count, extension_properties.size()));
+
+			break;
+		}
+
+		result.extensions.reserve(extension_properties.size());
 
 		for(const auto& [ name, version ] : extension_properties) {
 			result.extensions.emplace_back(name);
@@ -299,6 +310,7 @@ namespace encorder::vulkan {
 
 			result.families.push_back({
 					.index = i,
+					.queue_count = family_properties[i].queueFamilyProperties.queueCount,
 					.flags = flags,
 					.codec_operations = video_queue ? video_properties[i].videoCodecOperations : 0u});
 
@@ -337,23 +349,7 @@ namespace encorder::vulkan {
 					index);
 		}
 
-		return unexpect(
-				ENC_RESULT_ERROR_UNSUPPORTED,
-				"vulkan device creation not implemented yet");
-	}
-
-	std::expected<void, error> check_vulkan(
-			const std::string_view context,
-			const VkResult vulkan_result,
-			const enc_result result) {
-
-		if(vulkan_result == VK_SUCCESS) return {};
-
-		return unexpect(
-				result,
-				"`{}`: `{}`",
-				context,
-				magic_enum::enum_name<VkResult>(vulkan_result));
+		return std::make_unique<query_device>(log, functions, physical_devices[index]);
 	}
 
 	result<std::unique_ptr<encorder::driver>> make_driver(const logger& log) {

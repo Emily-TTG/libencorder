@@ -12,7 +12,17 @@ extern "C" {
 #define ENC_TEST_RESULT(...) (enc_test_log_result(#__VA_ARGS__, __VA_ARGS__))
 #define ENC_TEST_FATAL(...) do { if(enc_test_log_result(#__VA_ARGS__, __VA_ARGS__)) exit(EXIT_FAILURE); } while(0)
 
-static bool enc_test_log_result(const char* context, const enum enc_result result) {
+#ifdef __has_attribute
+# if __has_attribute(unused)
+#  define ENC_TEST_HELPER static __attribute__((unused))
+# endif
+#endif
+
+#ifndef ENC_TEST_HELPER
+# define ENC_TEST_HELPER static
+#endif
+
+ENC_TEST_HELPER bool enc_test_log_result(const char* context, const enum enc_result result) {
 	const char* error_context = enc_last_error_context();
 
 	if(fprintf(
@@ -26,7 +36,7 @@ static bool enc_test_log_result(const char* context, const enum enc_result resul
 	return result < 0;
 }
 
-static const char* enc_test_level_name(const enum enc_log_level level) {
+ENC_TEST_HELPER const char* enc_test_level_name(const enum enc_log_level level) {
 	switch(level) {
 		case ENC_LOG_TRACE: return "trace";
 		case ENC_LOG_DEBUG: return "debug";
@@ -37,11 +47,11 @@ static const char* enc_test_level_name(const enum enc_log_level level) {
 	}
 }
 
-static void enc_test_on_log(const enum enc_log_level level, const char* const message, void*) {
+ENC_TEST_HELPER void enc_test_on_log(const enum enc_log_level level, const char* const message, void*) {
 	fprintf(stderr, "(encorder) [%s] %s\n", enc_test_level_name(level), message);
 }
 
-static void enc_test_dump_codecs(const enum enc_codec codecs, const char* base_indent) {
+ENC_TEST_HELPER void enc_test_dump_codecs(const enum enc_codec codecs, const char* base_indent) {
 	if(codecs == ENC_CODEC_NONE) {
 		printf("%scodecs: none\n", base_indent);
 		return;
@@ -56,7 +66,7 @@ static void enc_test_dump_codecs(const enum enc_codec codecs, const char* base_i
 	}
 }
 
-static void enc_test_dump_backends(const enum enc_backend backends, const char* base_indent) {
+ENC_TEST_HELPER void enc_test_dump_backends(const enum enc_backend backends, const char* base_indent) {
 	printf("%s- backends:\n", base_indent);
 
 	for(unsigned bit = 1; bit; bit <<= 1u) {

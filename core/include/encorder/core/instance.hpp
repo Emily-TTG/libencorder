@@ -1,6 +1,7 @@
 #pragma once
 
 #include <encorder/core/device.hpp>
+#include <encorder/core/session.hpp>
 
 namespace encorder {
 	struct driver_registration {
@@ -20,6 +21,8 @@ struct enc_instance {
 	enc_backend requested_backends;
 	enc_backend available_backends;
 
+	encorder::session_registry sessions;
+
 	std::vector<std::unique_ptr<encorder::driver>> drivers;
 
 	struct device_slot {
@@ -28,6 +31,13 @@ struct enc_instance {
 	};
 
 	std::vector<device_slot> device_slots;
+
+	// Query-only devices. Declared after `drivers` so they are destroyed first.
+	std::vector<std::unique_ptr<encorder::device>> query_devices;
+	std::mutex query_mutex;
+
+	[[nodiscard]]
+	encorder::result<encorder::device*> query_device(std::uint32_t);
 };
 
 struct enc_device {

@@ -27,3 +27,9 @@ endfunction()
 
 encorder_test(scratch cpp)
 encorder_test(abi c)
+
+if(ENCORDER_BACKEND_VULKAN)
+	encorder_test(import cpp)
+
+	target_link_libraries(encorder-test-import PRIVATE Vulkan::Headers ${CMAKE_DL_LIBS})
+endif()

@@ -1,5 +1,7 @@
 #pragma once
 
+#include <encorder/core/error.hpp>
+
 namespace encorder {
 	class shared_library {
 	private:
@@ -16,7 +18,7 @@ namespace encorder {
 		shared_library& operator=(shared_library&&) noexcept;
 
 		[[nodiscard]]
-		bool open(std::span<const char* const>) noexcept;
+		result<void> open(std::span<const char* const>);
 
 		void close() noexcept;
 
